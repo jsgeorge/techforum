@@ -105,6 +105,22 @@ class UserViewSetREST(viewsets.ModelViewSet):
             print("category folloed")
             return Response(response, status=status.HTTP_200_OK)
     
+    @action(detail=True, methods=['GET'])
+    def fav_posts(self, request,pk=None):
+                user = User.objects.get(id=pk)
+                posts = Favorite.objects.filter(user=user)
+                serializer = FavoriteSerializer(posts, many=True)
+                response =  serializer.data
+                return Response(response, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['GET'])
+    def get_notifications(self, request, pk=None):
+        user = User.objects.get(id=pk)
+        notes= Notification.objects.filter(user=user)
+        serializer = NotificationSerializer(notes, many=True)
+        response = serializer.data
+        #print(request.user.profile)
+        return Response(response, status=status.HTTP_200_OK)
 
 class ProfileViewSetREST(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
@@ -172,5 +188,11 @@ class StudentRecordView(APIView):
 class FollowUserViewSetREST(viewsets.ViewSet):
     serializer_class = FollowUserSerializer
     queryset = FollowUser.objects.all()
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (AllowAny,)
+
+class NotificationViewSetREST(viewsets.ViewSet):
+    serializer_class = NotificationSerializer
+    queryset = Notification.objects.all()
     authentication_classes = (TokenAuthentication,)
     permission_classes = (AllowAny,)

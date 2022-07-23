@@ -17,7 +17,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['id',  'user', 'title', 'category',
-                   'image', 'content',  
+                   'image', 'content',  'push_notifications', 'views',
                   'created_at', 'comment_cnt', 'like_cnt']
     
    
@@ -30,7 +30,7 @@ class PostSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ['id', 'post', 'user', 'content']
+        fields = ['id', 'post', 'user', 'content','timestamp']
 
 class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,3 +41,9 @@ class FollowCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = FollowCategory
         fields = ['id', 'user',  'category']
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'user', 'post', 'note']

@@ -11,11 +11,13 @@ from rest_framework.urlpatterns import format_suffix_patterns
 
 from posts.views import(
     PostViewSetREST,
+    PostAPIView,
     LatestPostViewSetREST,
     CategoryViewSetREST,
     CommentViewSetREST,
     FavoriteViewSetREST,
     FollowCategoryViewSetREST,
+   
 )
 
 from users.serializers import *
@@ -24,7 +26,7 @@ from users.views import(
     UserViewSetREST,
     FollowUserViewSetREST,
     StudentRecordView,
-    
+    NotificationViewSetREST,
 )
 
 router = routers.DefaultRouter()
@@ -38,11 +40,13 @@ router.register("api/latest", LatestPostViewSetREST)
 router.register('api/categories', CategoryViewSetREST)
 router.register('api/followcategory', FollowCategoryViewSetREST)
 router.register('api/comments', CommentViewSetREST)
+router.register('api/notifications', NotificationViewSetREST)
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('home', PostAPIView.as_view()),
     path('', include(router.urls)),
     path('api/auth/', obtain_auth_token) ,
-    path('api/univstud/',StudentRecordView.as_view(),name='students_list')
+    # path('api/univstud/',StudentRecordView.as_view(),name='students_list')
 ]
 # urlpatterns += format_suffix_patterns([
 #     # API to map the student record

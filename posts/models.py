@@ -8,7 +8,7 @@ User = settings.AUTH_USER_MODEL
 
 # Create your models here.
 class Category(models.Model):
-    name = models.CharField(max_length=250)
+    name = models.CharField(max_length=250, unique=True)
     image = models.ImageField(null=True, blank=True)
     desc = models.TextField(default="", null=True,blank=True)
 
@@ -47,7 +47,9 @@ class Post(models.Model):
                                  on_delete=models.SET_NULL)
     image = models.ImageField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-   
+    push_notifications = models.BooleanField(default=False)
+    views = models.IntegerField(default=0)
+
     def comment_cnt(self):
         comments = Comment.objects.filter(post=self)
         return len(comments)
@@ -63,7 +65,6 @@ class Comment(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = (('user', 'post'),)
         index_together = (('user', 'post'),)
 
     def __str__(self):
@@ -81,3 +82,14 @@ class Favorite(models.Model):
     def __str__(self):
         return self.post
 
+class Notification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    post= models.ForeignKey(Post, on_delete=models.CASCADE)
+    note= models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        index_together = (('user', 'post'),)
+
+    def __str__(self):
+        return self.post

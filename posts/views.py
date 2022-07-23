@@ -1,10 +1,12 @@
+from ast import Pass
 import genericpath
+from tkinter.tix import NoteBook
 from urllib import request
 from django.shortcuts import render
 from .models import *
 from .serializers import *
 from rest_framework.views import APIView
-from rest_framework import serializers, viewsets, status, filters
+from rest_framework import serializers, viewsets, status, filters, generics
 from rest_framework.response import Response
 # , api_view, authentication_classes, permission_classes
 from rest_framework.decorators import action
@@ -27,24 +29,6 @@ class FollowCategoryViewSetREST(viewsets.ViewSet):
     permission_classes = (AllowAny,)
 
 
-    @action(detail=False, methods=['POST'])
-    def userFavorite(self, request) :
-        user = request.user
-        print(request.data)
-        if 'id' in request.data:
-            id = request.data['id']
-            print('userfavorite check')
-            print ('ctgryid ', id)
-            category = Category.objects.get(id=id)
-            favorite = FollowCategory.objects.get(user=user, category=category)
-            serializer = FollowCategorySerializer(favorite, many=False)
-            response = {
-                        'message': "Category unfollowed",
-                        'result': serializer.data}
-            return Response(response, status=status.HTTP_200_OK)
-        else:
-            response = {'message': "Error you need to provide category id"}
-            return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -66,6 +50,7 @@ class CategoryViewSetREST(viewsets.ModelViewSet):
         follow = request.data['follow']
         try:
             favorite = FollowCategory.objects.get(user=user, category=category)
+            print('category exists in favorites')
             favorite.delete()
             serializer = FollowCategorySerializer(favorite, many=False)
             response = {
@@ -84,6 +69,27 @@ class CategoryViewSetREST(viewsets.ModelViewSet):
             print("category folloed")
             return Response(response, status=status.HTTP_200_OK)
     
+    @action(detail=True, methods=['GET'])
+    def user_favorite(self, request,pk=None) :
+        user = request.user
+        category = Category.objects.get(id=pk)
+        try:
+            favorite = FollowCategory.objects.get(user=user, category=category)
+            serializer = FollowCategorySerializer(favorite, many=False)
+            response = {
+                        'message': "Category is followed by user",
+                        'result': serializer.data}
+            return Response(response, status=status.HTTP_200_OK)
+        except :
+            response = {'error'}
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PostAPIView(APIView):
+    def get(self, requst):
+        queryset = Post.objects.all()
+        serializer_class = PostSerializer(queryset, many=True)
+        return Response({'queryset': serializer_class.data})
 
 class PostViewSetREST(viewsets.ModelViewSet):
     serializer_class = PostSerializer
@@ -130,23 +136,29 @@ class PostViewSetREST(viewsets.ModelViewSet):
             post = Post.objects.get(id=pk)
             user = request.user
             content = request.data['content']
-        
-            try:
-                comment = Comment.objects.get(user=user, post=post)
-                response = {'message': "Your already wrote a review for this Post"}
-                return Response(response, status=status.HTTP_400_BAD_REQUEST)
-            except:
-                comment = Comment.objects.create(
-                    user=user,post=post, content=content)
-                serializer = CommentSerializer(comment, many=False)
-                response = {
-                    'message': "Commentcreated",
-                    'result': serializer.data}
+            note = request.user.first_name + " "  + request.user.last_name + " " + " made a comment on your post titled " + " " + post.title
+            # try:
+            #     comment = Comment.objects.get(user=user, post=post)
+            #     response = {'message': "Your already wrote a review for this Post"}
+            #     return Response(response, status=status.HTTP_400_BAD_REQUEST)
+            # except:
+            comment = Comment.objects.create(
+                user=user,post=post, content=content)
+            serializer = CommentSerializer(comment, many=False)
 
-                return Response(response, status=status.HTTP_200_OK)
+            if post.push_notifications:
+                notification= Notification.objects.create(
+                    user=user,post=post, note=note)
+                serializer = NotificationSerializer(notification, many=False)
+            
+            response = {
+                'message': "Commentcreated",
+                'result': serializer.data}
+
+            return Response(response, status=status.HTTP_200_OK)
                 
         else:
-            response = {'message': "Error you need to provide review"}
+            response = {'message': "Error you need to provide comment"}
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['GET'])
@@ -183,8 +195,35 @@ class PostViewSetREST(viewsets.ModelViewSet):
                 'result': serializer.data}
 
             return Response(response, status=status.HTTP_200_OK)
-    
 
+    @action(detail=True, methods=['PUT'])
+    def patch(self, request, pk=None):
+            post = Post.objects.get(id=pk)
+            user = request.user
+            push_notifications = request.data['push_notifications']
+            print(push_notifications)
+            if (post.user == user):
+                try:
+                   
+                    post.push_notifications = push_notifications
+                   # post.save()
+                    serializer = PostSerializer(post, many=False)
+                    response = {
+                        'message': "Post udpatated",
+                        'result' : serializer.data}
+
+                    return Response(response, status=status.HTTP_200_OK)
+                except:
+                    response = {
+                        'message': "Error in updatig post"}
+
+                    return Response(response, status=status.HTTP_400_BAD_REQUEST)
+                    
+            response = {
+                'message': "User is not hhe host of the post"}
+            return Response(response, status=status.HTTP_403_FORBIDDEN)
+                    
+    
 class LatestPostViewSetREST(viewsets.ModelViewSet):
     
     #serializer_class = MovieMiniSerializer
