@@ -13,6 +13,9 @@ from posts.views import(
     PostViewSetREST,
     PostAPIView,
     LatestPostViewSetREST,
+    RescentPostViewSetREST,
+    # MostCommmentsPostViewSetREST,
+    # MostLikesPostViewSetREST,
     CategoryViewSetREST,
     CommentViewSetREST,
     FavoriteViewSetREST,
@@ -37,6 +40,9 @@ router.register('api/posts', PostViewSetREST)
 router.register('api/posts/<int id>', PostViewSetREST)
 router.register('api/favorites',FavoriteViewSetREST)
 router.register("api/latest", LatestPostViewSetREST)
+router.register("api/rescent", RescentPostViewSetREST)
+# router.register("api/mostcomments",   MostCommmentsPostViewSetREST)
+# router.register("api/mostlikes", MostLikesPostViewSetREST)
 router.register('api/categories', CategoryViewSetREST)
 router.register('api/followcategory', FollowCategoryViewSetREST)
 router.register('api/comments', CommentViewSetREST)

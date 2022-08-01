@@ -35,7 +35,66 @@ class UserViewSetREST(viewsets.ModelViewSet):
    
     authentication_classes = (TokenAuthentication,)
     permission_classes = (AllowAny,)
+ 
+     
+    @action(detail=True, methods=['POST'])
+    def update_user(self, request, pk=None):
+        try:       
+            user = User.objects.get(id=pk)
+            user.first_name = request.data['first_name']
+            user.last_name = request.data['last_name']
+            user.email = request.data['email']
+            user.save()
+            print(user)
+            # user.save()
+            serializer = UserSerializer(user, many=False)
+            response = { 
+                'message': 'user updated successfully',
+                'result': serializer.data}
+            return Response(response, status=status.HTTP_200_OK)
+        except:
+            response = {
+              'message': "Error in updatig_useer"}
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=True, methods=['POST'])
+    def update_profile(self, request, pk=None):
+        try:       
+            user = User.objects.get(id=pk)
+            profile = Profile.objects.get(user=user)
+            profile.bio = request.data['bio']
+            profile.overview = request.data['overview']
+            profile.save()
+            # user.save()
+            serializer = ProfileSerializer(profile, many=False)
+            response = { 
+                'message': 'user profile updated successfully',
+                'result': serializer.data}
+            return Response(response, status=status.HTTP_200_OK)
+        except:
+            response = {
+              'message': "Error in updatig_useer"}
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+    @action(detail=True, methods=['POST'])
+    def update_avatar(self, request, pk=None):
+        # try:       
+            print(request.data['image'])
+            user = User.objects.get(id=pk)
+            profile = Profile.objects.get(user=user)
+            profile.image = request.data['image']
+
+            profile.save()
+            # user.save()
+            serializer = ProfileSerializer(profile, many=False)
+            response = { 
+                'message': 'user profile updated successfully',
+                'result': serializer.data}
+            return Response(response, status=status.HTTP_200_OK)
+        # except:
+        #     response = {
+        #       'message': "Error in updating user"}
+        #     return Response(response, status=status.HTTP_400_BAD_REQUEST)
+      
     @action(detail=False, methods=['GET'])
     def current_user(self, request):
         serializer = UserSerializer(request.user, many=False)
@@ -45,7 +104,7 @@ class UserViewSetREST(viewsets.ModelViewSet):
     
     # @api_view(['GET'])
     # def get_profile(request, *args, **kwargs):
-    #     instance = Profile.objects.filter(user=request.user).first()
+    #     instance = Profile.object s.filter(user=request.user).first()
     #     print(instance)
     #     data = {}
     #     if instance:
@@ -68,7 +127,17 @@ class UserViewSetREST(viewsets.ModelViewSet):
         response = serializer.data
         #print(request.user.profile)
         return Response(response, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['GET'])
+    def followers(self, request, pk=None):
+        user = User.objects.get(id=pk)
+        following = FollowUser.objects.filter(following=user)
+        serializer = FollowUserSerializer(following, many=True)
+        response = serializer.data
+        #print(request.user.profile)
+        return Response(response, status=status.HTTP_200_OK)
             
+       
     @action(detail=True, methods=['GET'])
     def favorites(self, request, pk=None):
         user = User.objects.get(id=pk)

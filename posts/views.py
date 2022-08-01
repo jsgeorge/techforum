@@ -28,10 +28,6 @@ class FollowCategoryViewSetREST(viewsets.ViewSet):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (AllowAny,)
 
-
-
-
-
 class CategoryViewSetREST(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
@@ -97,15 +93,48 @@ class PostViewSetREST(viewsets.ModelViewSet):
     filter_backends = [SearchFilter, DjangoFilterBackend]
     search_fields = ['title','content']
     filterset_fields = ['category']
-
     authentication_classes = (TokenAuthentication,)
     permission_classes = (AllowAny,)
 
+    @action(detail=True, methods=['POST'])
+    def add_view(self, request, pk=None):
+         print('incrementing views')
+         print(pk)
+         post = Post.objects.get(id=pk)
+         views = request.data['cnt']
+         print(views)
+         post.views = views
+         post.save()
+         serializer = PostSerializer(post, many=False)
+
+         response = {
+                'message': "VIews incremented",
+                'result': serializer.data}
+
+         return Response(response, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['POST'])
+    def add_like(self, request, pk=None):
+         post = Post.objects.get(id=pk)
+         likes = post.likes
+         like = request.data['like']
+         print(like)
+         if (like) :
+            post.likes = likes + 1
+         else:
+            post.likes = likes - 1
+         post.save()
+         serializer = PostSerializer(post, many=False)
+
+         response = {
+                'message': "Likes incremented",
+                'result': serializer.data}
+
+         return Response(response, status=status.HTTP_200_OK)
+    
     @action(detail=False, methods=['GET'])
     def my_posts(self, request):
          user= request.user
-
-         print(user)
          posts = Post.objects.filter(user=user).order_by('created_at').reverse()
          serializer =PostSerializer(posts,many=True)
          response = serializer.data
@@ -114,15 +143,18 @@ class PostViewSetREST(viewsets.ModelViewSet):
     @action(detail=False, methods=['POST'])
     def create_new(self, request):
          user = request.user
-         print('user', user)
          title = request.data['title']
          category = Category.objects.get(id=request.data['category'])
          content = request.data['content']
+         image= request.data['image']
+         push_notifications = request.data['notify']
          post= Post.objects.create(
              user = user,
              title=title,
              content=content,
-             category=category
+             category=category,
+             image=image,
+             push_notificaions=push_notifications
          )
          serializer=PostSerializer(post, many=False)
          response = {
@@ -195,7 +227,19 @@ class PostViewSetREST(viewsets.ModelViewSet):
                 'result': serializer.data}
 
             return Response(response, status=status.HTTP_200_OK)
+ 
+    @action(detail=True, methods=['GET'])
+    def user_favorite(self, request, pk=None):
+        user=request.user;
+        post=Post.objects.get(id=pk)
+        fav = Favorite.object.get(user=user, post=post)
+        serializer = FavoriteSerializer(fav, many=False)
+        response = {
+                'message': "Is Favorite",
+                'result': serializer.data}
 
+        return Response(response, status=status.HTTP_200_OK)
+ 
     @action(detail=True, methods=['PUT'])
     def patch(self, request, pk=None):
             post = Post.objects.get(id=pk)
@@ -228,10 +272,48 @@ class LatestPostViewSetREST(viewsets.ModelViewSet):
     
     #serializer_class = MovieMiniSerializer
     serializer_class = PostSerializer
-    queryset = Post.objects.order_by('created_at').reverse()[:9]
+    queryset = Post.objects.order_by('created_at').reverse()[:6]
     
     authentication_classes = (TokenAuthentication,)
     permission_classes = (AllowAny,)
+
+    
+class RescentPostViewSetREST(viewsets.ModelViewSet):
+    
+    #serializer_class = MovieMiniSerializer
+    serializer_class = PostSerializer
+    queryset = Post.objects.order_by('created_at').reverse()[:12]
+    
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (AllowAny,)
+
+    
+# class MostCommmentsPostViewSetREST(viewsets.ModelViewSet):
+    
+#     #serializer_class = MovieMiniSerializer
+#     serializer_class = PostSerializer
+#     queryset = Post.objects.order_by('comment_cnt').reverse()
+    
+#     authentication_classes = (TokenAuthentication,)
+#     permission_classes = (AllowAny,)
+
+# class MostViewssPostViewSetREST(viewsets.ModelViewSet):
+    
+#     #serializer_class = MovieMiniSerializer
+#     serializer_class = PostSerializer
+#     queryset = Post.objects.order_by('views_cnt').reverse()
+    
+#     authentication_classes = (TokenAuthentication,)
+#     permission_classes = (AllowAny,)
+
+# class MostLikesPostViewSetREST(viewsets.ModelViewSet):
+    
+#     #serializer_class = MovieMiniSerializer
+#     serializer_class = PostSerializer
+#     queryset = Post.objects.order_by('like_cnt').reverse()
+    
+#     authentication_classes = (TokenAuthentication,)
+#     permission_classes = (AllowAny,)
 
 class PostCtgryViewSetREST(viewsets.ModelViewSet):
     serializer_class = PostSerializer

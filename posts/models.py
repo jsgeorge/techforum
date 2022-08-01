@@ -39,17 +39,21 @@ class FollowCategory(models.Model):
     def __str__(self):
         return self.category
 
+def upload_to(instance, filename):
+    return 'images/{filename}'.format(filename=filename)
+
 class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=250)
     content = models.TextField()
     category = models.ForeignKey(Category,null=True,
                                  on_delete=models.SET_NULL)
-    image = models.ImageField(null=True, blank=True)
+    image = models.ImageField( null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     push_notifications = models.BooleanField(default=False)
     views = models.IntegerField(default=0)
-
+    likes = models.IntegerField(default=0)
+    
     def comment_cnt(self):
         comments = Comment.objects.filter(post=self)
         return len(comments)
